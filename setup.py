@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from setuptools import setup
 
 setup(
@@ -8,8 +9,8 @@ setup(
     author='Peter Fraedrich',
     author_email='peter.fraedrich@hexapp.net',
     description='A Redis-based message queue library',
-    packages=find_packages(),
-    platforms='any'
+    packages=['redq'],
+    platforms='any',
     install_requires=[
         'redis'
     ],

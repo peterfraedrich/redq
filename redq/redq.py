@@ -9,14 +9,18 @@ class RedisQueue:
     Implements a redis based queue using redis keys instead of pubsub.
     '''
 
-    STATS = {
-        'task_done' : 0,
-        'task_added' : 0,
-        'task_started' : 0,
-        'task_pending' : 0,
-        'task_ttl' : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-        'q_length' : 0
-    }
+    ### PRIVATE ###
+    def _decode(self, bstr):
+        '''
+        Converts a binary string (ASCII) to unicode
+        :param: bstr :binary: -- binary string to convert
+        '''
+        if self.decode:
+            return bstr.decode('ascii')
+        else:
+            return bstr
+
+    ### PUBLIC ###
 
     def __init__(self, redis_host='localhost', redis_port=6379, redis_auth=None, redis_db=0, qname='redq', ttl=15, safemode=True, gc=True, decode_strings=True):
         '''
@@ -40,14 +44,6 @@ class RedisQueue:
         self.r.set(self.GC, time.time())
         return
 
-    def _decode(self, bstr):
-        '''
-        :param: bstr :binary: -- decodes a binary string to ASCII if `decode_strings` is set to `True`
-        '''
-        if self.decode:
-            return bstr.decode('ascii')
-        else:
-            return bstr
 
     def put(self, item):
         '''
@@ -57,11 +53,21 @@ class RedisQueue:
         self.r.rpush(self.Q, item)
         return
 
+
+    def put_first(self, item):
+        '''
+        :param: item :any: -- the item to push to the queue
+        Pushes an item onto the front of the queue
+        '''
+        self.r.lpush(self.Q, item)
+        return
+
+
     def get(self, blocking=False):
         '''
         :param: blocking :bool: -- Block until a task is available
         Gets a task from the queue
-        Returns an UTF-8 encoded string
+        Returns an ASCII encoded string
         '''
         if not blocking:
             item = self.r.lpop(self.Q)
@@ -69,11 +75,26 @@ class RedisQueue:
             item = self.r.blpop(self.Q)
         return self._decode(item)
 
+
+    def get_last(self, blocking=False):
+        '''
+        param: blocking :bool: -- block until a task is available
+        Gets a teask from the rear of the queue
+        Returns an ASCII string
+        '''
+        if not blocking:
+            item = self.r.rpop(self.Q)
+        else:
+            item = self.r.brpop(self.Q)
+        return self._decode(item)
+
+
     def length(self):
         '''
         Returns the length of the queue
         '''
         return int(self.r.llen(self.Q))
+
 
     def position(self, task):
         '''
@@ -85,6 +106,7 @@ class RedisQueue:
             if self.r.lindex(self.Q, t) == task.encode('ascii'):
                 return t
         return -1
+
 
     def promote(self, index):
         '''
@@ -99,6 +121,7 @@ class RedisQueue:
         self.r.lrem(self.Q, 1, uid)
         return
 
+
     def drop(self, qname):
         '''
         :param: qname :str: -- the queue name, for security's sake.
@@ -106,16 +129,3 @@ class RedisQueue:
         '''
         self.r.delete('{}:q'.format(qname))
         return
-
-    # COME BACK TO THIS
-    # def _get_stats(self):
-    #     root = '{}:stats'.format(self.qname)
-    #     stat = self.r.hmget(root, self.STATS)
-    #     print(stat)
-    #     return
-
-    # def _set_stats(self):
-    #     root = '{}:stats'.format(self.qname)
-    #     self.r.hmset(root, self.STATS)
-    #     return
-    #
