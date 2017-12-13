@@ -1,7 +1,7 @@
 # redq
 A Redis-based message queue library, no server process required.
 
-The idea was to create a Redis based queue library similar to Hotqueue but with some added features like a "safemode" (more on that later) and statistics tracking (coming soon). **redq** uses lists to store *tasks* on a first-in, first-out (FIFO) basis (except when using the `get_last` or `put_first` methods. Again, more on that later.)
+The idea was to create a Redis based queue library similar to [Hotqueue](https://github.com/richardhenry/hotqueue) but with some added features like a "safemode" (more on that later) and statistics tracking (coming soon). **redq** uses lists to store *tasks* on a first-in, first-out (FIFO) basis (except when using the `get_last` or `put_first` methods. Again, more on that later.)
 
 
 ## Installation
@@ -39,6 +39,14 @@ Task(task='Hello world', taskid='e2fbd19fb0f74c18992ede1321348f85')
 >>> r.task_done(task.taskid)
 'e2fbd19fb0f74c18992ede1321348f85'
 ```
+
+## Safemode and Garbage Collection
+
+Unique to `redq` is the idea of a `safemode` and background cleanup/garbage collection. When safemode is enabled, any `get()` calls that would normally pop the task off the queue actually place the task in a separate `pending` branch with a unique `taskid` and a timestamp. This means that if the queue client errors out, or somehow can't complete whatever task with the task object, the task is not lost. This functionality is similar to the Python stdlib `Queue` where you have to make an explicit `task_done` call. When safemode is enabled, only a `task_done()` call will remove the task from the `pending` queue. When safemode is disabled, the original `get()` call will pop the task without sending to `pending`.
+
+Corollary to this function, there is a cleanup/garbage collection function that is triggered with most function calls that looks for abandoned pending tasks and, if they are older than the given `ttl`, resubmits them to the top of the queue for processing. This ensures that no task is left un-handled.
+
+Both garbage collection and safemode are disable-able if you so choose.
 
 ## API Reference
 ```python
@@ -176,4 +184,5 @@ redq.RedisQueue.drop(qname)
 ```
 
 ### To Do
-* Add stat counters 
+* Add stat counters
+* Sentinel support
