@@ -2,3 +2,5 @@ __pycache__
 *.pyc
 *.txt
 redq.egg-info/
+build/
+dist/

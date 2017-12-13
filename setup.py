@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='redq',
-    version='0.0.1',
+    version='1.0.1',
     url='http://github.com/peterfraedrich/redq',
     license='MIT',
     author='Peter Fraedrich',
@@ -22,7 +22,7 @@ setup(
         'FIFO'
     ],
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
         'Operating System :: Microsoft :: Windows',
