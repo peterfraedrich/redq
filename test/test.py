@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from redq import redq
+import redq
 import uuid
 import random
 import json
@@ -48,5 +48,3 @@ for loop in range(1):
         start = time.time()
         q.get_last()
         print('get_last:{}'.format(time.time() - start))
-
-
